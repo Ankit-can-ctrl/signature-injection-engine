@@ -12,6 +12,7 @@ interface Field {
   y: number;
   w: number;
   h: number;
+  page: number;
 }
 
 export default function App() {
@@ -20,6 +21,7 @@ export default function App() {
   const [dragging, setDragging] = useState<string | null>(null);
   const [resizing, setResizing] = useState<string | null>(null);
   const [numPages, setNumPages] = useState<number>(0);
+  const [currentPage, setCurrentPage] = useState<number>(1);
 
   // ==============add fields at center of the doc==============
   const addField = (type: string) => {
@@ -32,6 +34,7 @@ export default function App() {
         y: 0.3,
         w: 0.2,
         h: 0.05,
+        page: currentPage,
       },
     ]);
   };
@@ -91,6 +94,29 @@ export default function App() {
         </button>
       </div>
 
+      {/*=================== Pagination Controls ==================== */}
+      {numPages > 0 && (
+        <div className="flex items-center justify-center gap-4 mb-4">
+          <button
+            onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+            disabled={currentPage === 1}
+            className="px-4 py-2 bg-zinc-700 text-white rounded hover:bg-zinc-600 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            Previous
+          </button>
+          <span className="text-white">
+            Page {currentPage} of {numPages}
+          </span>
+          <button
+            onClick={() => setCurrentPage((p) => Math.min(numPages, p + 1))}
+            disabled={currentPage === numPages}
+            className="px-4 py-2 bg-zinc-700 text-white rounded hover:bg-zinc-600 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            Next
+          </button>
+        </div>
+      )}
+
       <div
         onMouseMove={onMouseMove}
         onMouseUp={() => {
@@ -108,38 +134,38 @@ export default function App() {
           file="/sample.pdf"
           onLoadSuccess={({ numPages }) => setNumPages(numPages)}
         >
-          {Array.from({ length: numPages }, (_, i) => (
-            <div key={i + 1} className="mb-4 bg-white">
-              <Page pageNumber={i + 1} width={600} />
-            </div>
-          ))}
+          <div className="bg-white">
+            <Page pageNumber={currentPage} width={600} />
+          </div>
         </Document>
 
-        {fields.map((f) => (
-          <div
-            key={f.id}
-            onMouseDown={() => setDragging(f.id)}
-            className="absolute border-2 border-blue-500 bg-blue-500/20 cursor-move
-              flex items-center justify-center text-xs text-blue-700 z-10"
-            style={{
-              left: `${f.x * 100}%`,
-              top: `${f.y * 100}%`,
-              width: `${f.w * 100}%`,
-              height: `${f.h * 100}%`,
-            }}
-          >
-            {f.type}
-
-            {/* ============resize handle================== */}
+        {fields
+          .filter((f) => f.page === currentPage)
+          .map((f) => (
             <div
-              onMouseDown={(e) => {
-                e.stopPropagation(); // Prevent triggering drag
-                setResizing(f.id);
+              key={f.id}
+              onMouseDown={() => setDragging(f.id)}
+              className="absolute border-2 border-blue-500 bg-blue-500/20 cursor-move
+              flex items-center justify-center text-xs text-blue-700 z-10"
+              style={{
+                left: `${f.x * 100}%`,
+                top: `${f.y * 100}%`,
+                width: `${f.w * 100}%`,
+                height: `${f.h * 100}%`,
               }}
-              className="absolute bottom-0 right-0 w-3 h-3 bg-blue-500 cursor-se-resize"
-            />
-          </div>
-        ))}
+            >
+              {f.type}
+
+              {/* ============resize handle================== */}
+              <div
+                onMouseDown={(e) => {
+                  e.stopPropagation(); // Prevent triggering drag
+                  setResizing(f.id);
+                }}
+                className="absolute bottom-0 right-0 w-3 h-3 bg-blue-500 cursor-se-resize"
+              />
+            </div>
+          ))}
       </div>
     </div>
   );
