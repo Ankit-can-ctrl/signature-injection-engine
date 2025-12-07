@@ -19,6 +19,7 @@ export default function App() {
   const [fields, setFields] = useState<Field[]>([]);
   const [dragging, setDragging] = useState<string | null>(null);
   const [resizing, setResizing] = useState<string | null>(null);
+  const [numPages, setNumPages] = useState<number>(0);
 
   // ==============add fields at center of the doc==============
   const addField = (type: string) => {
@@ -101,10 +102,17 @@ export default function App() {
           setResizing(null);
         }}
         ref={containerRef}
-        className="relative inline-block bg-white"
+        className="relative inline-block"
       >
-        <Document file="/sample.pdf">
-          <Page pageNumber={1} width={600} />
+        <Document
+          file="/sample.pdf"
+          onLoadSuccess={({ numPages }) => setNumPages(numPages)}
+        >
+          {Array.from({ length: numPages }, (_, i) => (
+            <div key={i + 1} className="mb-4 bg-white">
+              <Page pageNumber={i + 1} width={600} />
+            </div>
+          ))}
         </Document>
 
         {fields.map((f) => (
