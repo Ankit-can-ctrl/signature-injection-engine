@@ -18,6 +18,7 @@ export default function App() {
   const containerRef = useRef<HTMLDivElement>(null);
   const [fields, setFields] = useState<Field[]>([]);
   const [dragging, setDragging] = useState<string | null>(null);
+  const [resizing, setResizing] = useState<string | null>(null);
 
   // ==============add fields at center of the doc==============
   const addField = (type: string) => {
@@ -36,22 +37,39 @@ export default function App() {
 
   // ==============Handle dragging the fields ================
   const onMouseMove = (e: React.MouseEvent) => {
-    if (!dragging || !containerRef.current) return;
-    const rect = containerRef.current.getBoundingClientRect();
-    const x = (e.clientX - rect.left) / rect.width;
-    const y = (e.clientY - rect.top) / rect.height;
+    if ((!dragging && !resizing) || !containerRef.current) return;
+    const rect = containerRef.current?.getBoundingClientRect();
+    if (!rect) throw new Error("Cant define the position of the element.");
+    const mouseX = (e.clientX - rect.left) / rect.width;
+    const mouseY = (e.clientY - rect.top) / rect.height;
 
-    setFields((f) =>
-      f.map((field) =>
-        field.id === dragging
-          ? {
-              ...field,
-              x: Math.max(0, Math.min(x, 1 - field.w)),
-              y: Math.max(0, Math.min(y, 1 - field.h)),
-            }
-          : field
-      )
-    );
+    if (dragging) {
+      setFields((f) =>
+        f.map((field) =>
+          field.id === dragging
+            ? {
+                ...field,
+                x: Math.max(0, Math.min(mouseX - field.w / 2, 1 - field.w)),
+                y: Math.max(0, Math.min(mouseY - field.h / 2, 1 - field.h)),
+              }
+            : field
+        )
+      );
+    }
+
+    if (resizing) {
+      setFields((f) =>
+        f.map((field) =>
+          field.id === resizing
+            ? {
+                ...field,
+                w: Math.max(0.05, Math.min(mouseX - field.x, 1 - field.x)),
+                h: Math.max(0.02, Math.min(mouseY - field.y, 1 - field.y)),
+              }
+            : field
+        )
+      );
+    }
   };
 
   return (
@@ -74,8 +92,14 @@ export default function App() {
 
       <div
         onMouseMove={onMouseMove}
-        onMouseUp={() => setDragging(null)}
-        onMouseLeave={() => setDragging(null)}
+        onMouseUp={() => {
+          setDragging(null);
+          setResizing(null);
+        }}
+        onMouseLeave={() => {
+          setDragging(null);
+          setResizing(null);
+        }}
         ref={containerRef}
         className="relative inline-block bg-white"
       >
@@ -97,6 +121,15 @@ export default function App() {
             }}
           >
             {f.type}
+
+            {/* ============resize handle================== */}
+            <div
+              onMouseDown={(e) => {
+                e.stopPropagation(); // Prevent triggering drag
+                setResizing(f.id);
+              }}
+              className="absolute bottom-0 right-0 w-3 h-3 bg-blue-500 cursor-se-resize"
+            />
           </div>
         ))}
       </div>
