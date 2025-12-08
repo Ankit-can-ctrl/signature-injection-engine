@@ -30,7 +30,7 @@ export default function App() {
   const [signatureModal, setSignatureModal] = useState<string | null>(null);
   const [isDrawing, setIsDrawing] = useState(false);
 
-  // Load sample.pdf as base64 on mount
+  //================loading sample pdf on load ==============
   useEffect(() => {
     fetch(PDF_PATH)
       .then((res) => res.blob())
@@ -42,6 +42,7 @@ export default function App() {
   }, []);
 
   // ==============add fields at center of the doc==============
+
   const addField = (type: string) => {
     const defaultValue = () => {
       switch (type) {
@@ -70,7 +71,7 @@ export default function App() {
     ]);
   };
 
-  // Update field value
+  // =================Updating field value=====================
   const updateFieldValue = (id: string, value: string) => {
     setFields((f) =>
       f.map((field) => (field.id === id ? { ...field, value } : field))
@@ -82,6 +83,7 @@ export default function App() {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
+
     if (!ctx) return;
     setIsDrawing(true);
     const rect = canvas.getBoundingClientRect();

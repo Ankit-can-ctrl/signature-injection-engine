@@ -8,7 +8,7 @@ import cors from "cors";
 const PORT = process.env.PORT || 3000;
 const app = express();
 
-// Ensure uploads directory exists
+// ====check if upload exists
 if (!fs.existsSync("./uploads")) {
   fs.mkdirSync("./uploads", { recursive: true });
 }
@@ -28,7 +28,7 @@ app.post("/api/sign-pdf", async (req: Request, res: Response) => {
     return;
   }
 
-  // 1. Load PDF from base64 data
+  // ================Loading the pdf from base64 data
   const base64Data = pdfData.split(",")[1] || pdfData;
   const pdfBytes = Buffer.from(base64Data, "base64");
   const originalHash = crypto
@@ -36,11 +36,11 @@ app.post("/api/sign-pdf", async (req: Request, res: Response) => {
     .update(pdfBytes)
     .digest("hex");
 
-  // 2. Modify PDF
+  // =============create pdf from decoded bytes ===================
   const pdf = await PDFDocument.load(pdfBytes);
 
   for (const f of fields) {
-    // Get the correct page (frontend uses 1-based, pdf-lib uses 0-based)
+    // === get the poage
     const pageIndex = (f.page || 1) - 1;
     const page = pdf.getPage(pageIndex);
     const { width: W, height: H } = page.getSize();
@@ -75,7 +75,7 @@ app.post("/api/sign-pdf", async (req: Request, res: Response) => {
         size: h * 0.6,
       });
     } else if (f.type === "checkbox" && f.value === "checked") {
-      // Draw checkbox outline only (no fill)
+      // ================== draw outline square====================
       page.drawRectangle({
         x,
         y,
@@ -84,7 +84,8 @@ app.post("/api/sign-pdf", async (req: Request, res: Response) => {
         borderWidth: 1,
         borderColor: rgb(0, 0, 0),
       });
-      // Draw a checkmark using two lines
+
+      // =============check mark using two lines=====================
       const padding = h * 0.2;
       // First line: bottom-left to middle-bottom
       page.drawLine({
@@ -103,7 +104,7 @@ app.post("/api/sign-pdf", async (req: Request, res: Response) => {
     }
   }
 
-  // 3. Save & hash
+  //============================= Save & hash==================
   const signedBytes = await pdf.save();
   const signedHash = crypto
     .createHash("sha256")
@@ -113,7 +114,7 @@ app.post("/api/sign-pdf", async (req: Request, res: Response) => {
   const filename = `signed_${Date.now()}.pdf`;
   fs.writeFileSync(`./uploads/${filename}`, signedBytes);
 
-  // 4. Store audit
+  // ================Store audit======
   console.log({ originalHash, signedHash, timestamp: new Date() });
 
   res.json({ url: `/uploads/${filename}` });
