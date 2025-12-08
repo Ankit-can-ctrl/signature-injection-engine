@@ -5,11 +5,12 @@ import crypto from "crypto";
 import fs from "fs";
 import cors from "cors";
 
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 const app = express();
+
 app.use(
   cors({
-    origin: "http://localhost:5173",
+    origin: process.env.FRONTEND_URL || "http://localhost:5173",
   })
 );
 app.use(express.json({ limit: "50mb" }));
