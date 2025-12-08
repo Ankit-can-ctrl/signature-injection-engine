@@ -8,6 +8,11 @@ import cors from "cors";
 const PORT = process.env.PORT || 3000;
 const app = express();
 
+// Ensure uploads directory exists
+if (!fs.existsSync("./uploads")) {
+  fs.mkdirSync("./uploads", { recursive: true });
+}
+
 app.use(
   cors({
     origin: process.env.FRONTEND_URL || "http://localhost:5173",
